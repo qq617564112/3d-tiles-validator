@@ -765,6 +765,10 @@ function createInstancedOrientation() {
 }
 
 function createInstancedOct32POrientation() {
+    if (argv['3d-tiles-next']) {
+        return Promise.resolve();
+    }
+
     var tileOptions = {
         orientations : true,
         octEncodeOrientations : true
@@ -773,6 +777,10 @@ function createInstancedOct32POrientation() {
 }
 
 function createInstancedQuantized() {
+    if (argv['3d-tiles-next']) {
+        return Promise.resolve();
+    }
+
     var tileOptions = {
         quantizePositions : true
     };
@@ -780,6 +788,10 @@ function createInstancedQuantized() {
 }
 
 function createInstancedQuantizedOct32POrientation() {
+    if (argv['3d-tiles-next']) {
+        return Promise.resolve();
+    }
+
     var tileOptions = {
         quantizePositions : true,
         orientations : true,
