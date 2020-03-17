@@ -728,6 +728,12 @@ function createPointCloudTimeDynamicDraco() {
     return savePointCloudTimeDynamic('PointCloudTimeDynamicDraco', options);
 }
 
+function createInstancedWithBatchTable() {
+    var tileOptions = {
+        createBatchTable : true
+    };
+    return saveInstancedTileset('InstancedWithBatchTable', tileOptions);
+}
 
 function createInstancedWithoutBatchTable() {
     var tileOptions = {
