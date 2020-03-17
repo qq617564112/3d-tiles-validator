@@ -1,6 +1,7 @@
 const Cesium = require('cesium');
-const fsExtra = require('fs-extra');
-const path = require('path');
+import fsExtra = require('fs-extra');
+import path = require('path');
+import { Gltf } from './gltfType';
 const createI3dm = require('./createI3dm');
 
 const AttributeCompression = Cesium.AttributeCompression;
@@ -14,6 +15,39 @@ const sizeOfUint8 = 1;
 const sizeOfUint16 = 2;
 const sizeOfUint32 = 4;
 const sizeOfFloat32 = 4;
+
+const gltfPipeline = require('gltf-pipeline');
+const glbToGltf = gltfPipeline.glbToGltf;
+const gltfToGlb = gltfPipeline.gltfToGlb;
+const gltfConversionOptions = { resourceDirectory: path.join(__dirname, '../')};
+
+export interface InstanceTileOptions {
+    uri: string
+    tileWidth?: Number
+    transform?: number[], // Matrix4
+    instancesLength?: Number
+    embed?: Boolean
+    modelSize?: Number
+    createBatchTable?: Boolean
+    createBatchTableBinary?: Boolean
+    relativeToCenter?: Boolean
+    quantizePositions?: Boolean
+    eastNorthUp?: Boolean
+    orientations?: Boolean
+    octEncodeOrientations?: Boolean
+    uniformScales?: Boolean
+    nonUniformScales?: Boolean
+    batchIds?: Boolean
+    use3dTilesNext?: boolean
+    useGlb?: boolean
+}
+
+export interface InstancesTileResult {
+    glb?: Buffer,
+    gltf?: Gltf,
+    i3dm?: any,
+    batchTableJson?: any
+}
 
 /**
  * Creates a i3dm tile that represents a set of instances.
@@ -35,10 +69,12 @@ const sizeOfFloat32 = 4;
  * @param {Boolean} [options.uniformScales=false] Generate uniform scales for the instances.
  * @param {Boolean} [options.nonUniformScales=false] Generate non-uniform scales for the instances.
  * @param {Boolean} [options.batchIds=false] Generate batch ids for the instances. Not required even if createBatchTable is true.
+ * @param {Boolean} [options.use3dTilesNext=false] Use 3dTilesNext
+ * @param {Boolean} [options.useGlb=false] Use Glb
  *
  * @returns {Promise} A promise that resolves with the i3dm buffer and batch table JSON.
  */
-export function createInstancesTile(options) {
+export async function createInstancesTile(options: InstanceTileOptions): Promise<InstancesTileResult> {
     // Set the random number seed before creating the instances so that the generated instances are the same between runs
     CesiumMath.setRandomNumberSeed(0);
 
@@ -47,18 +83,20 @@ export function createInstancesTile(options) {
     const transform = defaultValue(options.transform, Matrix4.IDENTITY);
     const instancesLength = defaultValue(options.instancesLength, 25);
     let uri = options.uri;
-    const embed = defaultValue(options.embed, true);
-    const modelSize = defaultValue(options.modelSize, 20.0);
-    const createBatchTable = defaultValue(options.createBatchTable, true);
-    const createBatchTableBinary = defaultValue(options.createBatchTableBinary, false);
-    const relativeToCenter = defaultValue(options.relativeToCenter, false);
-    const quantizePositions = defaultValue(options.quantizePositions, false);
-    const eastNorthUp = defaultValue(options.eastNorthUp, false);
-    const orientations = defaultValue(options.orientations, false);
-    const octEncodeOrientations = defaultValue(options.octEncodeOrientations, false);
-    const uniformScales = defaultValue(options.uniformScales, false);
-    const nonUniformScales = defaultValue(options.nonUniformScales, false);
-    const batchIds = defaultValue(options.batchIds, false);
+    const embed = defaultValue(options.embed, true) as boolean;
+    const modelSize = defaultValue(options.modelSize, 20.0) as number;
+    const createBatchTable = defaultValue(options.createBatchTable, true) as boolean;
+    const createBatchTableBinary = defaultValue(options.createBatchTableBinary, false) as boolean;
+    const relativeToCenter = defaultValue(options.relativeToCenter, false) as boolean;
+    const quantizePositions = defaultValue(options.quantizePositions, false) as boolean;
+    const eastNorthUp = defaultValue(options.eastNorthUp, false) as boolean;
+    const orientations = defaultValue(options.orientations, false) as boolean;
+    const octEncodeOrientations = defaultValue(options.octEncodeOrientations, false) as boolean;
+    const uniformScales = defaultValue(options.uniformScales, false) as boolean;
+    const nonUniformScales = defaultValue(options.nonUniformScales, false) as boolean;
+    const batchIds = defaultValue(options.batchIds, false) as boolean;
+    const use3dTilesNext = defaultValue(options.use3dTilesNext, false) as boolean;
+    const useGlb = defaultValue(options.useGlb, false) as boolean;
 
     const featureTableJson: any = {};
     featureTableJson.INSTANCES_LENGTH = instancesLength;
@@ -133,23 +171,34 @@ export function createInstancesTile(options) {
         }
     }
 
-    return fsExtra.readFile(uri)
-        .then(function(glb) {
-            glb = (embed) ? glb : undefined;
-            uri = path.basename(uri);
-            const i3dm = createI3dm({
-                featureTableJson : featureTableJson,
-                featureTableBinary : featureTableBinary,
-                batchTableJson : batchTableJson,
-                batchTableBinary : batchTableBinary,
-                glb : glb,
-                uri : uri
-            });
-            return {
-                i3dm : i3dm,
-                batchTableJson : batchTableJson
-            };
-        });
+    let glb = await fsExtra.readFile(uri)
+    if (use3dTilesNext) {
+        let gltf = (await glbToGltf(glb, gltfConversionOptions)).gltf;
+        let result: InstancesTileResult = {};
+
+        if (useGlb) {
+            result.glb = (await gltfToGlb(result.gltf, gltfConversionOptions)).glb;
+        } else  {
+            result.gltf = gltf;
+        }
+
+        return result;
+    }
+
+    glb = (embed) ? glb : undefined;
+    uri = path.basename(uri);
+    const i3dm = createI3dm({
+        featureTableJson: featureTableJson,
+        featureTableBinary: featureTableBinary,
+        batchTableJson: batchTableJson,
+        batchTableBinary: batchTableBinary,
+        glb: glb,
+        uri: uri
+    });
+    return {
+        i3dm: i3dm, 
+        batchTableJson: batchTableJson
+    }
 }
 
 function getPosition(i, instancesLength, tileWidth, modelSize, transform) {
