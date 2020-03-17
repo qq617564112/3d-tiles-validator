@@ -35,7 +35,7 @@ var defined  = Cesium.defined;
 var Matrix4 = Cesium.Matrix4;
 var Quaternion = Cesium.Quaternion;
 
-var lowercase = util.lowercase;
+const toCamelCase = util.toCamelCase;
 var metersToLongitude = util.metersToLongitude;
 var metersToLatitude = util.metersToLatitude;
 var wgs84Transform = util.wgs84Transform;
@@ -728,12 +728,6 @@ function createPointCloudTimeDynamicDraco() {
     return savePointCloudTimeDynamic('PointCloudTimeDynamicDraco', options);
 }
 
-function createInstancedWithBatchTable() {
-    var tileOptions = {
-        createBatchTable : true
-    };
-    return saveInstancedTileset('InstancedWithBatchTable', tileOptions);
-}
 
 function createInstancedWithoutBatchTable() {
     var tileOptions = {
@@ -950,7 +944,7 @@ function createCompositeOfInstanced() {
 
 function saveCompositeTileset(tilesetName, tiles, batchTables, tilesetOptions?) {
     var tilesetDirectory = path.join(outputDirectory, 'Composite', tilesetName);
-    var contentUri = lowercase(tilesetName) + '.cmpt';
+    var contentUri = toCamelCase(tilesetName) + '.cmpt';
     var tilePath = path.join(tilesetDirectory, contentUri);
     var tilesetPath = path.join(tilesetDirectory, 'tileset.json');
 
@@ -974,9 +968,11 @@ function saveCompositeTileset(tilesetName, tiles, batchTables, tilesetOptions?) 
 
 function saveInstancedTileset(tilesetName, tileOptions, tilesetOptions?) {
     var tilesetDirectory = path.join(outputDirectory, 'Instanced', tilesetName);
-    var contentUri = lowercase(tilesetName) + '.i3dm';
+    var contentUri = toCamelCase(tilesetName) + '.i3dm';
     var tilePath = path.join(tilesetDirectory, contentUri);
     var tilesetPath = path.join(tilesetDirectory, 'tileset.json');
+    var use3dTilesNext = defaultValue(argv['3d-tiles-next'], false);
+    var useGlb = defaultValue(argv['glb'], false);
 
     tileOptions = defaultValue(tileOptions, {});
     tileOptions.uri = defaultValue(tileOptions.uri, instancesUri);
@@ -1024,7 +1020,7 @@ function saveBatchedTileset(tilesetName, tileOptions, tilesetOptions?) {
     tileOptions.use3dTilesNext = argv['3d-tiles-next'];
     tileOptions.useGlb = argv.glb;
 
-    var contentUri = lowercase(tilesetName) + ext;
+    var contentUri = toCamelCase(tilesetName) + ext;
     tilesetOptions.contentUri = contentUri;
     tilesetOptions.geometricError = smallGeometricError;
     if (!defined(tilesetOptions.region) && !defined(tilesetOptions.sphere) && !defined(tilesetOptions.box)) {
@@ -1094,7 +1090,7 @@ function savePointCloudTileset(tilesetName, tileOptions, tilesetOptions?) {
 
     var ext = calculateFilenameExt(argv['3d-tiles-next'], argv.glb, '.pnts');
 
-    var contentUri = lowercase(tilesetName) + ext;
+    var contentUri = toCamelCase(tilesetName) + ext;
     var tilePath = path.join(tilesetDirectory, contentUri);
 
     var result = createPointCloudTile(tileOptions);
