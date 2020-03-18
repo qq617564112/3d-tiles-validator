@@ -12,6 +12,8 @@ var gltfConversionOptions = { resourceDirectory: path.join(__dirname, '../')};
 import { calculateFilenameExt } from '../lib/calculateFilenameExt';
 import { createBatchTableHierarchy } from '../lib/createBatchTableHierarchy';
 import { createInstancesTile }  from '../lib/createInstancesTile';
+import { InstanceSamplesNext } from '../lib/instanceSamplesNext';
+import { SamplesGeneratorArguments } from '../lib/arguments';
 
 var createBuildingsTile = require('../lib/createBuildingsTile');
 var createB3dm = require('../lib/createB3dm');
@@ -212,6 +214,16 @@ var argv = require('yargs')
 
 var versionNumber = argv['3d-tiles-next'] ? '1.1' : '1.0';
 
+const args: SamplesGeneratorArguments = {
+    use3dTilesNext: argv['3d-tiles-next'],
+    useGlb: argv['glb'],
+    gltfConversionOptions: gltfConversionOptions,
+    gzip: gzip,
+    prettyJson: prettyJson,
+    geometricError: instancesGeometricError,
+    versionNumber: '1.1'
+}
+
 var promises = [
     // Batched
     createBatchedWithBatchTable(),
@@ -303,7 +315,19 @@ var promises = [
     createExpireTileset()
 ];
 
-function main() {
+async function main() {
+
+    // 3d-tiles-next 
+    try {
+        if (args.use3dTilesNext) {
+            await InstanceSamplesNext.createInstancedWithoutBatchTable(args);
+        }
+    } catch(error) {
+        console.log(error.message);
+        console.log(error.stack);
+    }
+
+    // legacy code path
     return Bluebird.all(promises).catch(function(error) {
         console.log(error.message);
         console.log(error.stack);
@@ -728,6 +752,10 @@ function createPointCloudTimeDynamicDraco() {
 }
 
 function createInstancedWithBatchTable() {
+    if (argv['3d-tiles-next']) {
+        return Bluebird.resolve();
+    }
+
     var tileOptions = {
         createBatchTable : true
     };
@@ -735,6 +763,10 @@ function createInstancedWithBatchTable() {
 }
 
 function createInstancedWithoutBatchTable() {
+    if (argv['3d-tiles-next']) {
+        return Bluebird.resolve();
+    }
+
     var tileOptions = {
         createBatchTable : false
     };
@@ -742,6 +774,10 @@ function createInstancedWithoutBatchTable() {
 }
 
 function createInstancedWithBatchTableBinary() {
+    if (argv['3d-tiles-next']) {
+        return Bluebird.resolve();
+    }
+
     var tileOptions = {
         createBatchTable : true,
         createBatchTableBinary : true
@@ -750,6 +786,10 @@ function createInstancedWithBatchTableBinary() {
 }
 
 function createInstancedGltfExternal() {
+    if (argv['3d-tiles-next']) {
+        return Bluebird.resolve();
+    }
+
     var tileOptions = {
         embed : false
     };
@@ -757,6 +797,10 @@ function createInstancedGltfExternal() {
 }
 
 function createInstancedOrientation() {
+    if (argv['3d-tiles-next']) {
+        return Bluebird.resolve();
+    }
+
     var tileOptions = {
         orientations : true
     };
@@ -800,6 +844,10 @@ function createInstancedQuantizedOct32POrientation() {
 }
 
 function createInstancedScaleNonUniform() {
+    if (argv['3d-tiles-next']) {
+        return Bluebird.resolve();
+    }
+
     var tileOptions = {
         nonUniformScales : true
     };
@@ -807,6 +855,10 @@ function createInstancedScaleNonUniform() {
 }
 
 function createInstancedScale() {
+    if (argv['3d-tiles-next']) {
+        return Bluebird.resolve();
+    }
+
     var tileOptions = {
         uniformScales : true
     };
@@ -814,6 +866,10 @@ function createInstancedScale() {
 }
 
 function createInstancedRTC() {
+    if (argv['3d-tiles-next']) {
+        return Bluebird.resolve();
+    }
+
     var tileOptions = {
         relativeToCenter : true
     };
@@ -821,6 +877,10 @@ function createInstancedRTC() {
 }
 
 function createInstancedWithTransform() {
+    if (argv['3d-tiles-next']) {
+        return Bluebird.resolve();
+    }
+
     var tileOptions = {
         transform : Matrix4.IDENTITY,
         eastNorthUp : false
@@ -833,6 +893,10 @@ function createInstancedWithTransform() {
 }
 
 function createInstancedRedMaterial() {
+    if (argv['3d-tiles-next']) {
+        return Bluebird.resolve();
+    }
+
     var tileOptions = {
         uri : instancesRedUri
     };
@@ -840,6 +904,10 @@ function createInstancedRedMaterial() {
 }
 
 function createInstancedWithBatchIds() {
+    if (argv['3d-tiles-next']) {
+        return Bluebird.resolve();
+    }
+
     var tileOptions = {
         batchIds : true
     };
@@ -847,6 +915,10 @@ function createInstancedWithBatchIds() {
 }
 
 function createInstancedTextured() {
+    if (argv['3d-tiles-next']) {
+        return Bluebird.resolve();
+    }
+
     var tileOptions = {
         uri : instancesTexturedUri
     };
@@ -1000,20 +1072,6 @@ async function saveInstancedTileset(tilesetName, tileOptions, tilesetOptions?) {
 
     const result = await createInstancesTile(tileOptions)
     var tilesetJson = createTilesetJsonSingle(tilesetOptions);
-
-    if (use3dTilesNext && !useGlb) {
-        return Bluebird.all([
-            saveJson(tilePath, result.gltf, prettyJson, gzip),
-            saveJson(tilesetPath, tilesetJson, prettyJson, gzip)
-        ]);
-    }
-
-    if (use3dTilesNext && useGlb) {
-        return Bluebird.all([
-            saveBinary(tilePath, result.glb, gzip),
-            saveJson(tilesetPath, tilesetJson, prettyJson, gzip)
-        ]);
-    }
 
     const i3dm = result.i3dm;
     const batchTableJson = result.batchTableJson;

@@ -1,10 +1,13 @@
 import { FeatureMetatable } from './featureMetatableType';
+import { KHRMeshInstancing } from './khrInstancingType';
 
 export enum GltfComponentType {
-    UNSIGNED_BYTE = 'UNSIGNED_BYTE',
-    UNSIGNED_SHORT = 'UNSIGNED_SHORT',
-    UNSIGNED_INT = 'UNSIGNED_INT',
-    FLOAT = 'FLOAT'
+    BYTE = 5120,
+    UNSIGNED_BYTE = 5121,
+    SHORT = 5122,
+    UNSIGNED_SHORT = 5123,
+    UNSIGNED_INT = 5125,
+    FLOAT = 5126
 }
 
 export enum GltfType {
@@ -21,6 +24,10 @@ export interface GltfScene {
     nodes: number[];
 }
 
+export interface GltfNodeExtensions {
+    KHR_mesh_instancing?: KHRMeshInstancing;
+}
+
 export interface GltfNode {
     name?: string;
     children?: number[];
@@ -28,6 +35,7 @@ export interface GltfNode {
     scale?: number[];
     translation?: number[];
     matrix?: number[];
+    extensions?: GltfNodeExtensions;
 }
 
 export interface GltfBuffer {
@@ -52,7 +60,7 @@ export interface GltfAccessor {
     type: GltfType;
 }
 
-export interface GltfMeshes {
+export interface GltfMesh {
     primitives?: GltfPrimitives;
 }
 
@@ -74,7 +82,7 @@ export interface GltfExtensions {
 export interface Gltf {
     scenes?: GltfScene[];
     nodes: GltfNode[];
-    meshes: any[];
+    meshes: GltfMesh[];
     buffers: GltfBuffer[];
     bufferViews: GltfBufferView[];
     accessors: GltfAccessor[];

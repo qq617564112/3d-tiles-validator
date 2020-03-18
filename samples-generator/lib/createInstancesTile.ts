@@ -16,11 +16,6 @@ const sizeOfUint16 = 2;
 const sizeOfUint32 = 4;
 const sizeOfFloat32 = 4;
 
-const gltfPipeline = require('gltf-pipeline');
-const glbToGltf = gltfPipeline.glbToGltf;
-const gltfToGlb = gltfPipeline.gltfToGlb;
-const gltfConversionOptions = { resourceDirectory: path.join(__dirname, '../')};
-
 export interface InstanceTileOptions {
     uri: string
     tileWidth?: Number
@@ -69,8 +64,7 @@ export interface InstancesTileResult {
  * @param {Boolean} [options.uniformScales=false] Generate uniform scales for the instances.
  * @param {Boolean} [options.nonUniformScales=false] Generate non-uniform scales for the instances.
  * @param {Boolean} [options.batchIds=false] Generate batch ids for the instances. Not required even if createBatchTable is true.
- * @param {Boolean} [options.use3dTilesNext=false] Use 3dTilesNext
- * @param {Boolean} [options.useGlb=false] Use Glb
+b
  *
  * @returns {Promise} A promise that resolves with the i3dm buffer and batch table JSON.
  */
@@ -95,8 +89,6 @@ export async function createInstancesTile(options: InstanceTileOptions): Promise
     const uniformScales = defaultValue(options.uniformScales, false) as boolean;
     const nonUniformScales = defaultValue(options.nonUniformScales, false) as boolean;
     const batchIds = defaultValue(options.batchIds, false) as boolean;
-    const use3dTilesNext = defaultValue(options.use3dTilesNext, false) as boolean;
-    const useGlb = defaultValue(options.useGlb, false) as boolean;
 
     const featureTableJson: any = {};
     featureTableJson.INSTANCES_LENGTH = instancesLength;
@@ -172,19 +164,6 @@ export async function createInstancesTile(options: InstanceTileOptions): Promise
     }
 
     let glb = await fsExtra.readFile(uri)
-    if (use3dTilesNext) {
-        let gltf = (await glbToGltf(glb, gltfConversionOptions)).gltf;
-        let result: InstancesTileResult = {};
-
-        if (useGlb) {
-            result.glb = (await gltfToGlb(result.gltf, gltfConversionOptions)).glb;
-        } else  {
-            result.gltf = gltf;
-        }
-
-        return result;
-    }
-
     glb = (embed) ? glb : undefined;
     uri = path.basename(uri);
     const i3dm = createI3dm({
