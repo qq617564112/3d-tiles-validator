@@ -2,20 +2,21 @@ const Cesium = require('cesium');
 const Matrix4 = Cesium.Matrix4;
 const gltfPipeline = require('gltf-pipeline');
 const glbToGltf = gltfPipeline.glbToGltf;
-const gltfToGlb = gltfPipeline.gltfToGlb;
 
-import fsExtra = require('fs-extra');
-import path = require('path');
-import { InstanceTile } from './instanceUtilsNext';
+import { InstanceTileUtils } from './instanceUtilsNext';
 import { SamplesGeneratorArguments } from './arguments';
 import { addBinaryBuffers } from './gltfUtil';
 import { Gltf } from './gltfType';
 import { toCamelCase } from './utility';
 import { addKHRMeshInstancingExtension } from './createKHRMeshInstancingExtension';
+import { TilesetJson } from './tilesetJson';
+import { GeneratedTileResult } from './generatedTileResult';
 import saveJson = require('./saveJson');
 import saveBinary = require('./saveBinary');
-import { TilesetJson } from './tilesetJson';
 import createTilesetJsonSingle = require('./createTilesetJsonSingle');
+import fsExtra = require('fs-extra');
+import path = require('path');
+import createFeatureMetadataExtension = require('./createFeatureMetadataExtension');
 
 export namespace InstanceSamplesNext {
     function getDefaultOpts() {
@@ -44,26 +45,9 @@ export namespace InstanceSamplesNext {
 
     export async function createInstancedWithoutBatchTable(
         args: SamplesGeneratorArguments
-    ) {
+    ): Promise<GeneratedTileResult> {
         const opts = getDefaultOpts();
-        const tilesetName = 'InstancedWithoutBatchTable';
-        const ext = args.useGlb ? '.glb' : '.gltf';
-        const fileName = toCamelCase(tilesetName) + ext;
-        const tilesetOpts = getTilesetOpts(
-            fileName,
-            args.geometricError,
-            args.versionNumber
-        );
-
-        const tileDestination = path.join(opts.rootDir, tilesetName, fileName);
-
-        const tilesetDestination = path.join(
-            opts.rootDir,
-            tilesetName,
-            'tileset.json'
-        );
-
-        const positions = InstanceTile.getPositions(
+        const positions = InstanceTileUtils.getPositions(
             opts.instancesLength,
             opts.tileWidth,
             opts.modelSize,
@@ -82,19 +66,51 @@ export namespace InstanceSamplesNext {
             }
         });
 
-        const tilesetJson = createTilesetJsonSingle(tilesetOpts);
-        await saveJson(
-            tilesetDestination,
-            tilesetJson,
-            args.prettyJson,
-            args.gzip
+        const ext = args.useGlb ? '.glb' : '.gltf';
+        const tilesetName = 'InstancedWithoutBatchTable';
+        const fileName = toCamelCase(tilesetName) + ext;
+        const tilesetOpts = getTilesetOpts(
+            fileName,
+            args.geometricError,
+            args.versionNumber
         );
-        if (!args.useGlb) {
-            await saveJson(tileDestination, gltf, args.prettyJson, args.gzip);
-        } else {
-            const result = (await gltfToGlb(gltf, args.gltfConversionOptions))
-                .glb;
-            await saveBinary(tileDestination, result, args.gzip);
+
+        const tileFolder = path.join(opts.rootDir, tilesetName);
+        const tilesetJson = createTilesetJsonSingle(tilesetOpts) as TilesetJson;
+        return {
+            gltf: gltf,
+            tileset: tilesetJson,
+            tileDestination: path.join(tileFolder, fileName),
+            tilesetDestination: path.join(tileFolder, 'tileset.json')
+        };
+    }
+
+    export async function createInstancedWithBatchTable(
+        args: SamplesGeneratorArguments
+    ): Promise<GeneratedTileResult> {
+        const opts = getDefaultOpts();
+        const batchTableJson = InstanceTileUtils.generateBatchTable(
+            opts.instancesLength,
+            opts.modelSize
+        );
+
+        const ext = args.useGlb ? '.glb' : '.gltf';
+        const tilesetName = 'InstancedWithBatchTable';
+        const fileName = toCamelCase(tilesetName) + ext;
+        const tileFolder = path.join(opts.rootDir, tilesetName);
+
+        const result = await createInstancedWithoutBatchTable(args);
+        result.gltf = createFeatureMetadataExtension(
+            result.gltf,
+            batchTableJson as any,
+            undefined
+        );
+
+        return {
+            gltf: result.gltf,
+            tileset: result.tileset,
+            tileDestination: path.join(tileFolder, fileName),
+            tilesetDestination: path.join(tileFolder, 'tileset.json')
         }
     }
 }

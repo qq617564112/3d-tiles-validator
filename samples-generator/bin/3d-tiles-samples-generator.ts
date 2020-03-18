@@ -14,6 +14,7 @@ import { createBatchTableHierarchy } from '../lib/createBatchTableHierarchy';
 import { createInstancesTile }  from '../lib/createInstancesTile';
 import { InstanceSamplesNext } from '../lib/instanceSamplesNext';
 import { SamplesGeneratorArguments } from '../lib/arguments';
+import { GeneratedTileResult } from '../lib/generatedTileResult';
 
 var createBuildingsTile = require('../lib/createBuildingsTile');
 var createB3dm = require('../lib/createB3dm');
@@ -316,11 +317,46 @@ var promises = [
 ];
 
 async function main() {
+    let tilesNextPromises: (() => Promise<GeneratedTileResult>)[] = [];
+    if (args.use3dTilesNext) {
+        tilesNextPromises = [
+            async () => InstanceSamplesNext.createInstancedWithoutBatchTable(args),
+            async () => InstanceSamplesNext.createInstancedWithBatchTable(args)
+        ];
+    }
 
     // 3d-tiles-next 
     try {
         if (args.use3dTilesNext) {
-            await InstanceSamplesNext.createInstancedWithoutBatchTable(args);
+            for (const tileCreator of tilesNextPromises) {
+                const generatedResult = await tileCreator();
+
+                await saveJson(
+                    generatedResult.tilesetDestination, 
+                    generatedResult.tileset, 
+                    args.prettyJson, 
+                    args.gzip
+                );
+
+                if (args.useGlb) {
+                    const glb = (await gltfToGlb(generatedResult.gltf, args.gltfConversionOptions)).glb;
+                    await saveBinary(
+                        generatedResult.tileDestination,
+                        glb,
+                        args.gzip
+                    );
+                } else {
+                    await saveJson(
+                        generatedResult.tileDestination,
+                        generatedResult.gltf,
+                        args.prettyJson,
+                        args.gzip
+                    );
+                }
+
+                // TODO: stick all the info for actually writing the tilesetjson
+                //       glb / gltf to the right folder here.
+            }
         }
     } catch(error) {
         console.log(error.message);

@@ -7,7 +7,7 @@ const Matrix4 = Cesium.Matrix4;
 const Cartesian2 = Cesium.Cartesian2;
 const Cartesian3 = Cesium.Cartesian3;
 
-export namespace InstanceTile {
+export namespace InstanceTileUtils {
     export interface FeatureTableJson {
         INSTANCES_LENGTH?: number;
         RTC_CENTER?: [number, number, number];
@@ -19,7 +19,13 @@ export namespace InstanceTile {
         };
     }
 
-    export function generateBatchTable(instancesLength: number) {
+    export function generateBatchTable(instancesLength: number, modelSize: number) {
+        return {
+            Height : new Array(instancesLength).fill(modelSize)
+        };
+    }
+
+    export function generateBatchTableBinary(instancesLength: number) {
         const idBuffer = Buffer.alloc(instancesLength * FLOAT32_SIZE_BYTES);
         for (let i = 0; i < instancesLength; ++i) {
             idBuffer.writeUInt32LE(i, i * FLOAT32_SIZE_BYTES);
@@ -123,4 +129,6 @@ export namespace InstanceTile {
 
         return position;
     }
+
+
 }
