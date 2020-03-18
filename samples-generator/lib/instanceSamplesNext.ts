@@ -31,7 +31,7 @@ export namespace InstanceSamplesNext {
         };
     }
 
-    export function getTilesetOpts(
+    function getTilesetOpts(
         contentUri: string,
         geometricError: number,
         versionNumber: string
@@ -44,7 +44,8 @@ export namespace InstanceSamplesNext {
     }
 
     export async function createInstancedWithoutBatchTable(
-        args: SamplesGeneratorArguments
+        args: SamplesGeneratorArguments,
+        skipTilesetJson: boolean = false
     ): Promise<GeneratedTileResult> {
         const opts = getDefaultOpts();
         const positions = InstanceTileUtils.getPositions(
@@ -67,21 +68,25 @@ export namespace InstanceSamplesNext {
         });
 
         const ext = args.useGlb ? '.glb' : '.gltf';
-        const tilesetName = 'InstancedWithoutBatchTable';
-        const fileName = toCamelCase(tilesetName) + ext;
-        const tilesetOpts = getTilesetOpts(
-            fileName,
-            args.geometricError,
-            args.versionNumber
-        );
+        const tileFolderName = 'InstancedWithoutBatchTable';
+        const tileFilename = toCamelCase(tileFolderName) + ext;
 
-        const tileFolder = path.join(opts.rootDir, tilesetName);
-        const tilesetJson = createTilesetJsonSingle(tilesetOpts) as TilesetJson;
+        let tilesetJson: TilesetJson = null;
+        if (!skipTilesetJson) {
+            const tilesetOpts = getTilesetOpts(
+                tileFilename,
+                args.geometricError,
+                args.versionNumber
+            );
+            tilesetJson = createTilesetJsonSingle(tilesetOpts) as TilesetJson;
+        }
+
         return {
             gltf: gltf,
             tileset: tilesetJson,
-            tileDestination: path.join(tileFolder, fileName),
-            tilesetDestination: path.join(tileFolder, 'tileset.json')
+            rootDir: opts.rootDir,
+            tileFolderName: tileFolderName,
+            tileFilename: tileFilename
         };
     }
 
@@ -95,22 +100,65 @@ export namespace InstanceSamplesNext {
         );
 
         const ext = args.useGlb ? '.glb' : '.gltf';
-        const tilesetName = 'InstancedWithBatchTable';
-        const fileName = toCamelCase(tilesetName) + ext;
-        const tileFolder = path.join(opts.rootDir, tilesetName);
+        const tileFolderName = 'InstancedWithBatchTable';
+        const tileFilename = toCamelCase(tileFolderName) + ext;
 
-        const result = await createInstancedWithoutBatchTable(args);
+        const result = await createInstancedWithoutBatchTable(args, true);
         result.gltf = createFeatureMetadataExtension(
             result.gltf,
             batchTableJson as any,
             undefined
         );
 
+        const tilesetOpts = getTilesetOpts(
+            tileFilename,
+            args.geometricError,
+            args.versionNumber
+        );
+
+        let tilesetJson = createTilesetJsonSingle(tilesetOpts) as TilesetJson;
         return {
             gltf: result.gltf,
-            tileset: result.tileset,
-            tileDestination: path.join(tileFolder, fileName),
-            tilesetDestination: path.join(tileFolder, 'tileset.json')
-        }
+            tileset: tilesetJson,
+            rootDir: opts.rootDir,
+            tileFolderName: tileFolderName,
+            tileFilename: tileFilename
+        };
+    }
+
+    export async function createInstancedWithBinaryBatchTable(
+        args: SamplesGeneratorArguments
+    ): Promise<GeneratedTileResult> {
+        const opts = getDefaultOpts();
+        const batchTableBinary = InstanceTileUtils.generateBatchTableBinary(
+            opts.instancesLength,
+            opts.modelSize
+        );
+
+        const ext = args.useGlb ? '.glb' : '.gltf';
+        const tileFolderName = 'InstancedWithBinaryBatchTable';
+        const tileFilename = toCamelCase(tileFolderName) + ext;
+
+        const result = await createInstancedWithoutBatchTable(args, true);
+        result.gltf = createFeatureMetadataExtension(
+            result.gltf,
+            batchTableBinary.json as any,
+            batchTableBinary.binary
+        );
+
+        const tilesetOpts = getTilesetOpts(
+            tileFilename,
+            args.geometricError,
+            args.versionNumber
+        );
+
+        let tilesetJson = createTilesetJsonSingle(tilesetOpts) as TilesetJson;
+        return {
+            gltf: result.gltf,
+            tileset: tilesetJson,
+            rootDir: opts.rootDir,
+            tileFolderName: tileFolderName,
+            tileFilename: tileFilename
+        };
     }
 }

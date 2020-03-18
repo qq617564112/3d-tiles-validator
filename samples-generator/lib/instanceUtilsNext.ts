@@ -25,7 +25,7 @@ export namespace InstanceTileUtils {
         };
     }
 
-    export function generateBatchTableBinary(instancesLength: number) {
+    export function generateBatchTableBinary(instancesLength: number, modelSize: number) {
         const idBuffer = Buffer.alloc(instancesLength * FLOAT32_SIZE_BYTES);
         for (let i = 0; i < instancesLength; ++i) {
             idBuffer.writeUInt32LE(i, i * FLOAT32_SIZE_BYTES);
@@ -33,10 +33,17 @@ export namespace InstanceTileUtils {
 
         const batchTableJson = {
             id: {
+                name: 'id',
                 byteOffset: 0,
                 componentType: 'UNSIGNED_INT',
-                type: 'SCALAR'
-            }
+                type: 'SCALAR',
+                count: instancesLength,
+                min: [0],
+                max: [instancesLength - 1],
+                byteLength: idBuffer.byteLength
+            },
+
+            Height: new Array(instancesLength).fill(modelSize)
         };
 
         return {

@@ -321,41 +321,31 @@ async function main() {
     if (args.use3dTilesNext) {
         tilesNextPromises = [
             async () => InstanceSamplesNext.createInstancedWithoutBatchTable(args),
-            async () => InstanceSamplesNext.createInstancedWithBatchTable(args)
+            async () => InstanceSamplesNext.createInstancedWithBatchTable(args),
+            async () => InstanceSamplesNext.createInstancedWithBinaryBatchTable(args),
         ];
     }
 
     // 3d-tiles-next 
+    const ext = args.useGlb ? '.glb' : '.gltf';
     try {
         if (args.use3dTilesNext) {
             for (const tileCreator of tilesNextPromises) {
                 const generatedResult = await tileCreator();
-
-                await saveJson(
-                    generatedResult.tilesetDestination, 
-                    generatedResult.tileset, 
-                    args.prettyJson, 
-                    args.gzip
-                );
-
+                const rootDir = generatedResult.rootDir;
+                const tileFolderName = generatedResult.tileFolderName;
+                const tileFilename = generatedResult.tileFilename;
+                const gltf = generatedResult.gltf;
+                const tileDest = path.join(rootDir, tileFolderName, tileFilename);
+                const tileset = generatedResult!.tileset;
+                const tilesetDest = path.join( rootDir, tileFolderName, 'tileset.json');
+                await saveJson(tilesetDest, tileset, prettyJson, gzip);
                 if (args.useGlb) {
-                    const glb = (await gltfToGlb(generatedResult.gltf, args.gltfConversionOptions)).glb;
-                    await saveBinary(
-                        generatedResult.tileDestination,
-                        glb,
-                        args.gzip
-                    );
+                    const glb = (await gltfToGlb(gltf, gltfConversionOptions)).glb;
+                    await saveBinary(tileDest, glb, args.gzip);
                 } else {
-                    await saveJson(
-                        generatedResult.tileDestination,
-                        generatedResult.gltf,
-                        args.prettyJson,
-                        args.gzip
-                    );
+                    await saveJson(tileDest, gltf, prettyJson, gzip);
                 }
-
-                // TODO: stick all the info for actually writing the tilesetjson
-                //       glb / gltf to the right folder here.
             }
         }
     } catch(error) {
