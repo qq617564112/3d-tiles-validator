@@ -80,7 +80,7 @@ export namespace InstanceSamplesNext {
         await saveJson(tilesetDestination, tileset, args.prettyJson, args.gzip);
 
         let tileDestination = path.join(destFolder, tileFileName);
-        if (args.use3dTilesNext) {
+        if (!args.useGlb) {
             await saveJson(tileDestination, gltf, args.prettyJson, args.gzip);
         } else {
             const glb = (await gltfToGlb(gltf, args.gltfConversionOptions)).glb;
@@ -472,6 +472,7 @@ export namespace InstanceSamplesNext {
             latitude,
             instancesModelSize / 2.0
         );
+        const center = Matrix4.multiplyByPoint(opts.transform, new Cartesian3(), new Cartesian3());
         const instancesTileWidth = opts.tileWidth;
         // Just a little extra padding at the top for aiding Cesium tests
         const instancesHeight = instancesModelSize + 10.0; 
