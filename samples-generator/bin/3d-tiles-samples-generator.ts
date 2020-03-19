@@ -14,7 +14,6 @@ import { createBatchTableHierarchy } from '../lib/createBatchTableHierarchy';
 import { createInstancesTile }  from '../lib/createInstancesTile';
 import { InstanceSamplesNext } from '../lib/instanceSamplesNext';
 import { SamplesGeneratorArguments } from '../lib/arguments';
-import { GeneratedTileResult } from '../lib/generatedTileResult';
 
 var createBuildingsTile = require('../lib/createBuildingsTile');
 var createB3dm = require('../lib/createB3dm');

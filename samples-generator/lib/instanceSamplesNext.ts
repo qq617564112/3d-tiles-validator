@@ -14,7 +14,6 @@ import { Gltf } from './gltfType';
 import { toCamelCase } from './utility';
 import { addKHRMeshInstancingExtension } from './createKHRMeshInstancingExtension';
 import { TilesetJson } from './tilesetJson';
-import { GeneratedTileResult } from './generatedTileResult';
 import saveJson = require('./saveJson');
 import saveBinary = require('./saveBinary');
 import createTilesetJsonSingle = require('./createTilesetJsonSingle');
