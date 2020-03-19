@@ -239,6 +239,7 @@ export namespace InstanceSamplesNext {
         );
     }
 
+    /* TODO: // Figure out  how normalRight / normalUp should be placed in .gltf
     export async function createInstancedOrientation(args: GeneratorArgs) {
         const opts = getDefaultTileOptions();
         let gltf = await getGltfFromUri(
@@ -264,9 +265,6 @@ export namespace InstanceSamplesNext {
             orientations.normalRight,
             orientations.normalUp
         );
-
-        // TODO: how should normal right and normal up be represented as a
-        //       node?
 
         addKHRMeshInstancingExtension(gltf, gltf.nodes[0], {
             attributes: {
@@ -305,6 +303,7 @@ export namespace InstanceSamplesNext {
             args
         );
     }
+    */
 
     export async function createInstancedScaleNonUniform(args: GeneratorArgs) {
         const opts = getDefaultTileOptions();
@@ -462,8 +461,8 @@ export namespace InstanceSamplesNext {
         );
     }
 
+    /* // TODO: Figure out how we want to handle EAST_NORTH_UP in .gltf world
     export async function createInstancedWithTransform(args: GeneratorArgs) {
-        /*
         const opts = getDefaultTileOptions();
         opts.transform = Matrix4.IDENTITY;
 
@@ -496,8 +495,8 @@ export namespace InstanceSamplesNext {
         tileOptions.transform = instancesTransform;
         tileOptions.box = instancesBoxLocal;
         tileOptions.eastNorthUp = false;
-        */
     }
+    */
 
     export async function createInstancedRedMaterial(args: GeneratorArgs) {
         const opts = getDefaultTileOptions();
