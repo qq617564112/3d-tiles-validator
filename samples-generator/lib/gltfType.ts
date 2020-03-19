@@ -30,6 +30,7 @@ export interface GltfNodeExtensions {
 
 export interface GltfNode {
     name?: string;
+    mesh?: number;
     children?: number[];
     rotation?: number[];
     scale?: number[];

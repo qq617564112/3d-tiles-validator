@@ -434,6 +434,14 @@ export namespace InstanceSamplesNext {
             }
         });
 
+        gltf.nodes = [{
+                name: 'RTC_CENTER',
+                mesh: gltf.nodes[0].mesh!,
+                translation: [center.x, center.y, center.z],
+                extensions: gltf.nodes[0].extensions!
+            }
+        ];
+
         const ext = args.useGlb ? '.glb' : '.gltf';
         const outputFolder = 'InstancedRTC';
         const tileFilename = toCamelCase(outputFolder) + ext;
