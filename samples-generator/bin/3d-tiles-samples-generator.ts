@@ -317,12 +317,18 @@ var promises = [
 ];
 
 async function main() {
-    let tilesNextPromises: (() => Promise<GeneratedTileResult>)[] = [];
+    let tilesNextPromises: (() => Promise<void>)[] = [];
     if (args.use3dTilesNext) {
         tilesNextPromises = [
             async () => InstanceSamplesNext.createInstancedWithoutBatchTable(args),
             async () => InstanceSamplesNext.createInstancedWithBatchTable(args),
             async () => InstanceSamplesNext.createInstancedWithBinaryBatchTable(args),
+            async () => InstanceSamplesNext.createInstancedOrientation(args),
+            async () => InstanceSamplesNext.createInstancedScaleNonUniform(args),
+            async () => InstanceSamplesNext.createInstancedScale(args),
+            async () => InstanceSamplesNext.createInstancedRTC(args),
+            async () => InstanceSamplesNext.createInstancedWithTransform(args),
+            async () => InstanceSamplesNext.createInstancedRedMaterial(args),
         ];
     }
 
@@ -330,22 +336,8 @@ async function main() {
     const ext = args.useGlb ? '.glb' : '.gltf';
     try {
         if (args.use3dTilesNext) {
-            for (const tileCreator of tilesNextPromises) {
-                const generatedResult = await tileCreator();
-                const rootDir = generatedResult.rootDir;
-                const tileFolderName = generatedResult.tileFolderName;
-                const tileFilename = generatedResult.tileFilename;
-                const gltf = generatedResult.gltf;
-                const tileDest = path.join(rootDir, tileFolderName, tileFilename);
-                const tileset = generatedResult!.tileset;
-                const tilesetDest = path.join( rootDir, tileFolderName, 'tileset.json');
-                await saveJson(tilesetDest, tileset, prettyJson, gzip);
-                if (args.useGlb) {
-                    const glb = (await gltfToGlb(gltf, gltfConversionOptions)).glb;
-                    await saveBinary(tileDest, glb, args.gzip);
-                } else {
-                    await saveJson(tileDest, gltf, prettyJson, gzip);
-                }
+            for (const promise of tilesNextPromises) {
+                await promise();
             }
         }
     } catch(error) {

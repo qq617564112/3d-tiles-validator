@@ -24,4 +24,5 @@
      box?: object;
      sphere?: object;
      transform?: object // Cesium.Matrix4, TODO: type aliases for Cesium
+     eastNorthUp?: boolean;
  }
