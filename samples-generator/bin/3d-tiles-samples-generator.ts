@@ -322,7 +322,7 @@ async function main() {
             async () => InstanceSamplesNext.createInstancedWithoutBatchTable(args),
             async () => InstanceSamplesNext.createInstancedWithBatchTable(args),
             async () => InstanceSamplesNext.createInstancedWithBinaryBatchTable(args),
-            //async () => InstanceSamplesNext.createInstancedOrientation(args),
+            async () => InstanceSamplesNext.createInstancedOrientation(args),
             async () => InstanceSamplesNext.createInstancedScaleNonUniform(args),
             async () => InstanceSamplesNext.createInstancedScale(args),
             async () => InstanceSamplesNext.createInstancedRTC(args),

@@ -1,9 +1,10 @@
 import { FLOAT32_SIZE_BYTES } from './typeSize';
 import { Attribute } from './attribute';
 import { GltfType, GltfComponentType } from './gltfType';
-import { DEFAULT_MIN_VERSION } from 'tls';
 const Cesium = require('cesium');
 const Matrix4 = Cesium.Matrix4;
+const Matrix3 = Cesium.Matrix3;
+const Quaternion = Cesium.Quaternion;
 const Cartesian3 = Cesium.Cartesian3;
 const CesiumMath = Cesium.Math;
 
@@ -149,14 +150,73 @@ export namespace InstanceTileUtils {
         return Cartesian3.normalize(orthogonal, orthogonal);
     }
 
-    function getNormal() {
-        const x = CesiumMath.nextRandomNumber();
-        const y = CesiumMath.nextRandomNumber();
-        const z = CesiumMath.nextRandomNumber();
-
+    export type RNG = () => number;
+    function getNormal(rng: RNG = CesiumMath.nextRandomNumber) {
+        const x = rng();
+        const y = rng();
+        const z = rng();
         const normal = new Cartesian3(x, y, z);
         Cartesian3.normalize(normal, normal);
         return normal;
+    }
+
+    export function getQuaternionNormals(
+        instancesLength: number,
+        rng: RNG = CesiumMath.nextRandomNumber
+    ): Attribute {
+        const totalQuaternions = instancesLength * 4;
+        const buffer = Buffer.alloc(totalQuaternions * FLOAT32_SIZE_BYTES);
+
+        const normalForward = new Cartesian3();
+        const rotationMatrix = new Matrix3();
+        const quaternion = new Quaternion();
+
+        const min = new Array(4).fill(+Infinity);
+        const max = new Array(4).fill(-Infinity);
+
+        for (let i = 0; i < instancesLength; ++i) {
+            const normalUp = getNormal(rng);
+            const normalRight = getNormal(rng);
+            Cartesian3.normalize(normalUp, normalUp);
+            Cartesian3.normalize(normalRight, normalRight);
+            Cartesian3.cross(normalRight, normalUp, normalForward);
+
+            // prettier-ignore
+            const rotationMatrixColMajor = [
+                normalRight.x, normalRight.y, normalRight.z,
+                normalUp.x, normalUp.y, normalUp.z,
+                normalForward.x, normalForward.y, normalForward.z
+            ];
+
+            Cesium.Matrix3.fromRowMajorArray(rotationMatrixColMajor, rotationMatrix);
+            Cesium.Quaternion.fromRotationMatrix(rotationMatrix, quaternion)
+
+            min[0] = Math.min(min[0], quaternion.x);
+            min[1] = Math.min(min[1], quaternion.y);
+            min[2] = Math.min(min[2], quaternion.z);
+            min[3] = Math.min(min[3], quaternion.w);
+
+            max[0] = Math.max(max[0], quaternion.x);
+            max[1] = Math.max(max[1], quaternion.y);
+            max[2] = Math.max(max[2], quaternion.z);
+            max[3] = Math.max(max[3], quaternion.w);
+
+            buffer.writeFloatLE(quaternion.x, (i * 4 + 0) * FLOAT32_SIZE_BYTES);
+            buffer.writeFloatLE(quaternion.y, (i * 4 + 1) * FLOAT32_SIZE_BYTES);
+            buffer.writeFloatLE(quaternion.z, (i * 4 + 2) * FLOAT32_SIZE_BYTES);
+            buffer.writeFloatLE(quaternion.w, (i * 4 + 3) * FLOAT32_SIZE_BYTES);
+        }
+
+        return {
+            buffer: buffer,
+            propertyName: 'QUATERNION_ROTATION',
+            byteAlignment: FLOAT32_SIZE_BYTES,
+            count: instancesLength,
+            componentType: GltfComponentType.FLOAT,
+            type: GltfType.VEC4,
+            min: min,
+            max: max 
+        }
     }
 
     export function getOrientations(

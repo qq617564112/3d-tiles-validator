@@ -239,7 +239,6 @@ export namespace InstanceSamplesNext {
         );
     }
 
-    /* TODO: // Figure out  how normalRight / normalUp should be placed in .gltf
     export async function createInstancedOrientation(args: GeneratorArgs) {
         const opts = getDefaultTileOptions();
         let gltf = await getGltfFromUri(
@@ -254,21 +253,22 @@ export namespace InstanceSamplesNext {
             opts.transform
         );
 
-        const orientations = InstanceTileUtils.getOrientations(
+        const quaternions = InstanceTileUtils.getQuaternionNormals(
             opts.instancesLength
         );
 
         const positionAccessorIndex = gltf.accessors.length;
+        const quaternionsAccessorIndex = positionAccessorIndex + 1;
         addBinaryBuffers(
             gltf,
             positions,
-            orientations.normalRight,
-            orientations.normalUp
+            quaternions
         );
 
         addKHRMeshInstancingExtension(gltf, gltf.nodes[0], {
             attributes: {
-                TRANSLATION: positionAccessorIndex
+                TRANSLATION: positionAccessorIndex,
+                ROTATION: quaternionsAccessorIndex
             }
         });
 
@@ -303,7 +303,6 @@ export namespace InstanceSamplesNext {
             args
         );
     }
-    */
 
     export async function createInstancedScaleNonUniform(args: GeneratorArgs) {
         const opts = getDefaultTileOptions();

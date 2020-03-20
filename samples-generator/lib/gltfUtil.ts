@@ -63,7 +63,7 @@ export function addBinaryBuffers(gltf: Gltf, ...attributes: Attribute[]) {
             count: attrib.count,
             min: attrib.min,
             max: attrib.max,
-            type: GltfType.VEC3
+            type: attrib.type
         });
     }
 
