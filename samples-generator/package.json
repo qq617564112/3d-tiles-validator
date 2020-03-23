@@ -53,7 +53,7 @@
   "scripts": {
     "prebuild": "del-cli dist",
     "build": "tsc",
-    "postbuild": "copyfiles  -u lib/**/* specs/**/* data/**/* -e '*.js' -e '*.ts' dist",
+    "postbuild": "copyfiles  -u 'lib/**/*' 'specs/**/*' 'data/**/*' -e '*.js' -e '*.ts' dist",
     "watch": "tsc -w",
     "eslint": "eslint \"./**/*.js\" --cache --quiet",
     "test": "gulp test",
