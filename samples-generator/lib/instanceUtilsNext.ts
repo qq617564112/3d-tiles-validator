@@ -182,13 +182,13 @@ export namespace InstanceTileUtils {
             Cartesian3.cross(normalRight, normalUp, normalForward);
 
             // prettier-ignore
-            const rotationMatrixColMajor = [
+            const rotationMatrixRowMajor = [
                 normalRight.x, normalRight.y, normalRight.z,
                 normalUp.x, normalUp.y, normalUp.z,
                 normalForward.x, normalForward.y, normalForward.z
             ];
 
-            Cesium.Matrix3.fromRowMajorArray(rotationMatrixColMajor, rotationMatrix);
+            Cesium.Matrix3.fromRowMajorArray(rotationMatrixRowMajor, rotationMatrix);
             Cesium.Quaternion.fromRotationMatrix(rotationMatrix, quaternion)
 
             min[0] = Math.min(min[0], quaternion.x);
